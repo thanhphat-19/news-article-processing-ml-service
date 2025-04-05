@@ -1,0 +1,131 @@
+version: '3.8'
+
+services:
+  # Combined service for API and Celery worker
+  text_service:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    container_name: text_service
+    image: text_service:latest
+    environment:
+      - MQ_URL=${MQ_URL}
+      - REDIS_URL=${REDIS_URL}
+      - RMQ_USER=${RMQ_USER}
+      - RMQ_PWD=${RMQ_PWD}
+      - REDIS_PWD=${REDIS_PWD}
+      - COMMON_DATA_DIR=${COMMON_DATA_DIR}
+      - OUTPUT_DIR=${OUTPUT_DIR}
+      - LLM_PROVIDER=${LLM_PROVIDER}
+      - OLLAMA_HOST=${OLLAMA_HOST}
+      - OLLAMA_MODEL=${OLLAMA_MODEL}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_MODEL=${OPENAI_MODEL}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - ANTHROPIC_MODEL=${ANTHROPIC_MODEL}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GEMINI_MODEL=${GEMINI_MODEL}
+      - COHERE_API_KEY=${COHERE_API_KEY}
+      - COHERE_MODEL=${COHERE_MODEL}
+      - LLM_REQUEST_TIMEOUT=${LLM_REQUEST_TIMEOUT}
+      - TASK_RETRY_COUNT=${TASK_RETRY_COUNT}
+      - TASK_RETRY_BACKOFF=${TASK_RETRY_BACKOFF}
+      - PYTHONPATH=/app
+    ports:
+      - "8000:8000"  # API port
+    volumes:
+
+      - ./logs:/app/logs
+      - ../common_data:/common_data
+    networks:
+      - vnet
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - rabbitmq
+      - redis
+    command: >
+      sh -c "cd /app && 
+             python -m uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload &
+             cd /app && PYTHONPATH=/app celery -A src.app.worker.task worker -Q summarize,category,extract_keywords,process,test -n worker.text_processing --loglevel=info --concurrency=2 -E --logfile=/app/logs/celery.log"
+
+  # Gradio UI
+  ui:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    container_name: text_ui
+    image: text_service:latest
+    environment:
+      - MQ_URL=${MQ_URL}
+      - REDIS_URL=${REDIS_URL}
+      - PYTHONPATH=/app
+    ports:
+      - "7860:7860"  # Gradio UI port
+    volumes:
+      - ./src:/app/src  # Mount only the src directory
+      - ./logs:/app/logs
+    networks:
+      - vnet
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - text_service
+    command: python -m src.gradio_app
+
+  # RabbitMQ for message queue
+  rabbitmq:
+    image: rabbitmq:3.12-management
+    container_name: rabbitmq
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RMQ_USER}
+      - RABBITMQ_DEFAULT_PASS=${RMQ_PWD}
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - vnet
+
+  # Redis for results backend
+  redis:
+    image: redis:7.2
+    container_name: redis
+    command: redis-server --requirepass ${REDIS_PWD}
+    ports:
+      - "6379:6379"
+    networks:
+      - vnet
+
+  # Flower for Celery monitoring
+  flower:
+    image: mher/flower
+    container_name: flower
+    environment:
+      - CELERY_BROKER_URL=${MQ_URL}
+      - CELERY_RESULT_BACKEND=${REDIS_URL}
+    ports:
+      - "5555:5555"
+    networks:
+      - vnet
+    depends_on:
+      - rabbitmq
+      - redis
+
+
+  mkdocs:
+    image: squidfunk/mkdocs-material:latest
+    container_name: text_services_docs
+    volumes:
+      - .:/docs
+    ports:
+      - "8080:8080"  
+    networks:
+      - vnet
+    command:  serve -a 0.0.0.0:8080
+networks:
+  vnet:
+    driver: bridge
+
+volumes:
+  rabbitmq_data:
+  redis_data: 

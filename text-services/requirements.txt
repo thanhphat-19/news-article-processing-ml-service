@@ -1,0 +1,17 @@
+fastapi>=0.103.0
+uvicorn>=0.23.2
+celery>=5.3.4
+redis>=5.0.0
+langchain>=0.0.300
+langchain-community>=0.0.10
+langchain-openai>=0.0.5
+langchain-anthropic>=0.1.1
+langchain-google-genai>=0.0.5
+pydantic>=2.4.0
+pydantic-settings>=2.0.0
+flower>=2.0.1
+python-dotenv>=1.0.0
+httpx>=0.24.1
+gradio>=4.0.0
+requests>=2.31.0
+mkdocs-material==9.5.28

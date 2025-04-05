@@ -1,0 +1,10 @@
+ci:
+  - .github/workflows/**/*
+  - .github/*.yml
+  - .github/**.yaml
+
+docker:
+  - docker-compose*.yaml
+
+documentation:
+  - "**/*.md"

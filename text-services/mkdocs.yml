@@ -1,0 +1,73 @@
+site_name: Text Processing API Documentation
+site_description: Documentation for the Text Processing API
+site_author: Your Name
+copyright: Your Company © 2025
+
+# Repository
+repo_name: text-services
+repo_url: https://github.com/yourusername/text-services
+
+# Configuration
+theme:
+  name: material
+  palette:
+    primary: blue
+    accent: indigo
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - content.code.copy
+    - content.code.annotate
+  icon:
+    logo: material/text-box-outline
+
+# Extensions
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+
+# Navigation Structure
+nav:
+  - Home: index.md
+  - Getting Started: getting-started.md
+  - API Reference: 
+    - Overview: api/overview.md
+    - Endpoints: api/endpoints.md
+  - LLMs Models: llm-models.md
+  - Promting Strategy: promting-strategy.md
+
+
+# Plugins
+plugins:
+  - search
+  - minify:
+      minify_html: true
+
+# JavaScript for Mermaid
+extra_javascript:
+  - https://unpkg.com/mermaid/dist/mermaid.min.js
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/yourusername
+    - icon: fontawesome/brands/linkedin
+      link: https://linkedin.com/in/yourusername
+
+extra_css:
+  - assets/stylesheets/extra.css
