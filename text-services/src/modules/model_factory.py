@@ -5,6 +5,7 @@ from langchain_community.chat_models import ChatOllama
 from langchain_openai import ChatOpenAI
 from langchain_anthropic import ChatAnthropic
 from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_cohere import ChatCohere
 from langchain_core.messages import SystemMessage, HumanMessage
 from src.configs.app import app_settings
 from langchain_core.messages.base import BaseMessage
@@ -28,6 +29,8 @@ class LLMClient:
             return app_settings.ANTHROPIC_MODEL
         elif self.provider == "gemini":
             return app_settings.GEMINI_MODEL
+        elif self.provider == "cohere":
+            return app_settings.COHERE_MODEL
         else:
             logger.warning(f"Unknown provider: {self.provider}, falling back to Ollama")
             self.provider = "ollama"
@@ -73,6 +76,17 @@ class LLMClient:
                     raise ValueError("Gemini API key not provided")
                 return ChatGoogleGenerativeAI(
                     api_key=app_settings.GEMINI_API_KEY.get_secret_value(),
+                    model=self.model_name,
+                    temperature=0.7,
+                    convert_system_message_to_human=True,
+                    timeout=app_settings.LLM_REQUEST_TIMEOUT,
+                )
+            elif self.provider == "cohere":
+                logger.info(f"Initializing Cohere with model: {self.model_name}")
+                if not app_settings.COHERE_API_KEY:
+                    raise ValueError("Cohere API key not provided")
+                return ChatCohere(
+                    api_key=app_settings.COHERE_API_KEY.get_secret_value(),
                     model=self.model_name,
                     temperature=0.7,
                     convert_system_message_to_human=True,
